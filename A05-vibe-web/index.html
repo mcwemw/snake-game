@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🦞 呆萌演算法視覺化小幫手 — 路徑搜尋互動圖解</title>
+<style>
+  :root{
+    --bg:#182046; --panel:#1f2a5a; --ink:#f5f7fc; --muted:#9fb0e0;
+    --green:#34c759; --red:#e74238; --mint:#6fe0c0; --gold:#ffd34d;
+    --wall:#0d1330; --start:#34c759; --end:#e74238; --visited:#3a63d8;
+    --frontier:#6fe0c0; --path:#ffd34d;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"PingFang TC","Heiti TC","Microsoft JhengHei",system-ui,sans-serif;
+    background:linear-gradient(160deg,#141b3d,#182046 60%,#101530);color:var(--ink);min-height:100vh}
+  header{text-align:center;padding:18px 12px 4px}
+  header h1{margin:0;font-size:clamp(20px,3.5vw,30px)}
+  header p{margin:6px 0 0;color:var(--muted);font-size:14px}
+  .wrap{max-width:1040px;margin:0 auto;padding:10px 14px 40px}
+  .panel{background:var(--panel);border:1px solid #2c3a74;border-radius:14px;padding:14px;margin:12px 0;
+    box-shadow:0 6px 24px rgba(0,0,0,.25)}
+  .controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:center}
+  .controls label{font-size:13px;color:var(--muted);display:flex;flex-direction:column;gap:4px}
+  select,button,input[type=range]{font-family:inherit}
+  select{background:var(--wall);color:var(--ink);border:1px solid #39498c;border-radius:8px;padding:7px 10px;font-size:14px}
+  button{cursor:pointer;border:none;border-radius:10px;padding:9px 16px;font-size:14px;font-weight:700;color:#0b1020;transition:.15s transform,.15s filter}
+  button:hover{filter:brightness(1.08)}button:active{transform:translateY(1px)}
+  .btn-go{background:var(--green)}.btn-clear{background:var(--mint)}.btn-wall{background:var(--gold)}
+  .btn-ghost{background:#2c3a74;color:var(--ink)}
+  #grid{display:grid;gap:2px;margin:14px auto 0;width:100%;max-width:760px;touch-action:none;user-select:none}
+  .cell{aspect-ratio:1/1;background:#27336a;border-radius:4px;transition:background .12s}
+  .cell.wall{background:var(--wall)}
+  .cell.start{background:var(--start);box-shadow:0 0 0 2px #0b1020 inset}
+  .cell.end{background:var(--end);box-shadow:0 0 0 2px #0b1020 inset}
+  .cell.visited{background:var(--visited)}
+  .cell.frontier{background:var(--frontier)}
+  .cell.path{background:var(--path)}
+  .stats{display:flex;flex-wrap:wrap;gap:16px;justify-content:center;margin-top:12px;font-size:14px}
+  .stats b{color:var(--gold)}
+  .legend{display:flex;flex-wrap:wrap;gap:12px;justify-content:center;margin-top:10px;font-size:12px;color:var(--muted)}
+  .legend span{display:inline-flex;align-items:center;gap:5px}
+  .sw{width:13px;height:13px;border-radius:3px;display:inline-block}
+  .hint{text-align:center;color:var(--muted);font-size:13px;margin-top:10px;line-height:1.7}
+  .explain{font-size:14px;line-height:1.9;color:#dfe6ff}
+  .explain code{background:var(--wall);padding:1px 6px;border-radius:5px;color:var(--mint)}
+  footer{text-align:center;color:var(--muted);font-size:12px;margin-top:16px}
+  @media(max-width:560px){.controls label{font-size:12px}}
+</style>
+</head>
+<body>
+<header>
+  <h1>🦞 呆萌演算法視覺化小幫手</h1>
+  <p>路徑搜尋互動圖解 · BFS / DFS / Dijkstra / A* ｜ 點格子畫牆，看演算法怎麼找路</p>
+</header>
+
+<div class="wrap">
+  <div class="panel">
+    <div class="controls">
+      <label>演算法
+        <select id="algo">
+          <option value="bfs">BFS（廣度優先）</option>
+          <option value="dfs">DFS（深度優先）</option>
+          <option value="dijkstra">Dijkstra</option>
+          <option value="astar" selected>A*（啟發式最短路）</option>
+        </select>
+      </label>
+      <label>速度
+        <input type="range" id="speed" min="1" max="100" value="55">
+      </label>
+      <label>模式
+        <select id="mode">
+          <option value="wall">畫/擦 牆</option>
+          <option value="start">移動 起點</option>
+          <option value="end">移動 終點</option>
+        </select>
+      </label>
+      <button class="btn-go" id="run">▶ 開始尋路</button>
+      <button class="btn-ghost" id="maze">🎲 隨機迷宮</button>
+      <button class="btn-wall" id="clearPath">清除路徑</button>
+      <button class="btn-clear" id="clearAll">全部重設</button>
+    </div>
+
+    <div id="grid" aria-label="尋路網格"></div>
+
+    <div class="stats">
+      <div>探索節點：<b id="sVisited">0</b></div>
+      <div>路徑長度：<b id="sPath">—</b></div>
+      <div>耗時：<b id="sTime">0</b> ms</div>
+      <div>狀態：<b id="sState">就緒</b></div>
+    </div>
+
+    <div class="legend">
+      <span><i class="sw" style="background:var(--start)"></i>起點</span>
+      <span><i class="sw" style="background:var(--end)"></i>終點</span>
+      <span><i class="sw" style="background:var(--wall)"></i>牆</span>
+      <span><i class="sw" style="background:var(--frontier)"></i>待探索(frontier)</span>
+      <span><i class="sw" style="background:var(--visited)"></i>已探索</span>
+      <span><i class="sw" style="background:var(--path)"></i>最短路徑</span>
+    </div>
+
+    <p class="hint">手機/滑鼠：在格子上拖曳即可畫牆或擦牆。切「移動起點/終點」可拖動綠/紅點。</p>
+  </div>
+
+  <div class="panel explain">
+    <b>🧭 這四個演算法差在哪？</b><br>
+    • <code>BFS</code>：一圈一圈往外擴，無權重圖保證找到<b>最短步數</b>。<br>
+    • <code>DFS</code>：一路鑽到底再回頭，<b>不保證最短</b>，拿來對照「為什麼會繞遠路」。<br>
+    • <code>Dijkstra</code>：每步成本相同時等價於 BFS，但框架能擴到<b>有權重</b>的圖。<br>
+    • <code>A*</code>：Dijkstra + 曼哈頓距離啟發式，<b>朝終點方向優先探索</b>，通常探索最少節點就找到最短路。<br>
+    切不同演算法跑同一張牆，看「已探索(藍色)」的範圍大小，就能直覺感受效率差異。
+  </div>
+
+  <footer>單一 <code style="color:#6fe0c0">index.html</code>（HTML+CSS+JS 內嵌）· Vibe Coding 作品 · 🦞 amazing grace</footer>
+</div>
+
+<script>
+(() => {
+  const COLS = 30, ROWS = 18;
+  const gridEl = document.getElementById('grid');
+  gridEl.style.gridTemplateColumns = `repeat(${COLS},1fr)`;
+  const $ = id => document.getElementById(id);
+
+  let cells = [];        // DOM
+  let walls = new Set(); // "r,c"
+  let start = {r: 8, c: 4}, end = {r: 8, c: 25};
+  let running = false, drawing = false, dragTarget = null;
+
+  const key = (r,c) => r+','+c;
+  const inB = (r,c) => r>=0 && r<ROWS && c>=0 && c<COLS;
+
+  function build(){
+    gridEl.innerHTML = '';
+    cells = [];
+    for(let r=0;r<ROWS;r++){
+      const row=[];
+      for(let c=0;c<COLS;c++){
+        const d=document.createElement('div');
+        d.className='cell'; d.dataset.r=r; d.dataset.c=c;
+        gridEl.appendChild(d); row.push(d);
+      }
+      cells.push(row);
+    }
+    paint();
+  }
+  function paint(){
+    for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
+      const d=cells[r][c]; d.className='cell';
+      if(walls.has(key(r,c))) d.classList.add('wall');
+    }
+    cells[start.r][start.c].className='cell start';
+    cells[end.r][end.c].className='cell end';
+  }
+  function clearSearch(){
+    document.querySelectorAll('.cell.visited,.cell.frontier,.cell.path')
+      .forEach(d=>{const r=+d.dataset.r,c=+d.dataset.c;
+        d.className='cell'+(walls.has(key(r,c))?' wall':'');});
+    cells[start.r][start.c].className='cell start';
+    cells[end.r][end.c].className='cell end';
+    $('sVisited').textContent='0'; $('sPath').textContent='—'; $('sTime').textContent='0'; $('sState').textContent='就緒';
+  }
+
+  // ---- interaction ----
+  function cellFromEvent(e){
+    const t=(e.touches?e.touches[0]:e);
+    const el=document.elementFromPoint(t.clientX,t.clientY);
+    if(el&&el.classList.contains('cell')) return {r:+el.dataset.r,c:+el.dataset.c};
+    return null;
+  }
+  function applyAt(r,c){
+    const mode=$('mode').value;
+    if(mode==='start'){ if(!walls.has(key(r,c))&&!(r===end.r&&c===end.c)){start={r,c};paint();} return; }
+    if(mode==='end'){ if(!walls.has(key(r,c))&&!(r===start.r&&c===start.c)){end={r,c};paint();} return; }
+    if((r===start.r&&c===start.c)||(r===end.r&&c===end.c)) return;
+    if(dragTarget==='add') walls.add(key(r,c));
+    else if(dragTarget==='del') walls.delete(key(r,c));
+    cells[r][c].className='cell'+(walls.has(key(r,c))?' wall':'');
+  }
+  function down(e){
+    if(running) return;
+    const p=cellFromEvent(e); if(!p) return;
+    drawing=true;
+    const mode=$('mode').value;
+    if(mode==='wall') dragTarget = walls.has(key(p.r,p.c))?'del':'add';
+    else dragTarget=null;
+    applyAt(p.r,p.c); e.preventDefault();
+  }
+  function move(e){ if(!drawing||running) return; const p=cellFromEvent(e); if(p){applyAt(p.r,p.c);e.preventDefault();} }
+  function up(){ drawing=false; dragTarget=null; }
+  gridEl.addEventListener('mousedown',down); gridEl.addEventListener('mousemove',move);
+  window.addEventListener('mouseup',up);
+  gridEl.addEventListener('touchstart',down,{passive:false});
+  gridEl.addEventListener('touchmove',move,{passive:false});
+  window.addEventListener('touchend',up);
+
+  // ---- algorithms: record order of frontier/visited for animation ----
+  function neighbors(r,c){
+    return [[r-1,c],[r+1,c],[r,c-1],[r,c+1]].filter(([nr,nc])=>inB(nr,nc)&&!walls.has(key(nr,nc)));
+  }
+  function h(r,c){ return Math.abs(r-end.r)+Math.abs(c-end.c); } // Manhattan
+
+  function search(algo){
+    const steps=[];           // {type:'frontier'|'visited', r,c}
+    const prev={};
+    const sk=key(start.r,start.c), ek=key(end.r,end.c);
+    const seen=new Set([sk]);
+    let found=false;
+
+    if(algo==='bfs'||algo==='dfs'){
+      const dq=[[start.r,start.c]];
+      while(dq.length){
+        const [r,c]= algo==='bfs'? dq.shift() : dq.pop();
+        steps.push({type:'visited',r,c});
+        if(r===end.r&&c===end.c){found=true;break;}
+        for(const [nr,nc] of neighbors(r,c)){
+          if(!seen.has(key(nr,nc))){ seen.add(key(nr,nc)); prev[key(nr,nc)]=key(r,c);
+            steps.push({type:'frontier',r:nr,c:nc}); dq.push([nr,nc]); }
+        }
+      }
+    } else {
+      // dijkstra / a* : simple priority via array (grid small)
+      const dist={[sk]:0};
+      const pq=[{k:sk,r:start.r,c:start.c,f:algo==='astar'?h(start.r,start.c):0}];
+      while(pq.length){
+        let bi=0; for(let i=1;i<pq.length;i++) if(pq[i].f<pq[bi].f) bi=i;
+        const cur=pq.splice(bi,1)[0];
+        steps.push({type:'visited',r:cur.r,c:cur.c});
+        if(cur.r===end.r&&cur.c===end.c){found=true;break;}
+        for(const [nr,nc] of neighbors(cur.r,cur.c)){
+          const nk=key(nr,nc), nd=dist[cur.k]+1;
+          if(dist[nk]===undefined||nd<dist[nk]){
+            dist[nk]=nd; prev[nk]=cur.k;
+            const f = nd + (algo==='astar'?h(nr,nc):0);
+            steps.push({type:'frontier',r:nr,c:nc});
+            pq.push({k:nk,r:nr,c:nc,f});
+          }
+        }
+      }
+    }
+    // reconstruct
+    let path=[];
+    if(found){ let k=ek; while(k&&k!==sk){const [r,c]=k.split(',').map(Number);path.push([r,c]);k=prev[k];} path.reverse(); }
+    return {steps,path,found};
+  }
+
+  async function run(){
+    if(running) return;
+    clearSearch(); running=true; $('sState').textContent='搜尋中…';
+    const t0=performance.now();
+    const {steps,path,found}=search($('algo').value);
+    const delay=Math.max(2, 105-(+$('speed').value));
+    let visited=0;
+    for(const s of steps){
+      const d=cells[s.r][s.c];
+      if((s.r===start.r&&s.c===start.c)||(s.r===end.r&&s.c===end.c)){ /*keep*/ }
+      else if(s.type==='frontier'){ if(!d.classList.contains('visited')) d.className='cell frontier'; }
+      else { d.className='cell visited'; visited++; $('sVisited').textContent=visited; }
+      await sleep(delay);
+    }
+    // draw path
+    for(const [r,c] of path){
+      if((r===start.r&&c===start.c)||(r===end.r&&c===end.c)) continue;
+      cells[r][c].className='cell path'; await sleep(Math.max(6,delay));
+    }
+    const t1=performance.now();
+    $('sTime').textContent=(t1-t0).toFixed(0);
+    $('sPath').textContent= found? (path.length+1)+' 步' : '找不到路';
+    $('sState').textContent= found? '✅ 找到最短路' : '⚠️ 無路可達';
+    cells[start.r][start.c].className='cell start'; cells[end.r][end.c].className='cell end';
+    running=false;
+  }
+  const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+
+  function randomMaze(){
+    if(running) return; walls.clear();
+    for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
+      if((r===start.r&&c===start.c)||(r===end.r&&c===end.c)) continue;
+      if(Math.random()<0.28) walls.add(key(r,c));
+    }
+    paint();
+  }
+
+  $('run').onclick=run;
+  $('maze').onclick=randomMaze;
+  $('clearPath').onclick=()=>{ if(!running) clearSearch(); };
+  $('clearAll').onclick=()=>{ if(running)return; walls.clear(); start={r:8,c:4}; end={r:8,c:25}; build(); };
+
+  build();
+})();
+</script>
+</body>
+</html>
