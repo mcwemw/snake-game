@@ -1,4 +1,4 @@
-# Vibe Coding 作業— 🐍 貪食蛇（Snake）
+# Vibe Coding — 🐍 貪食蛇（Snake）
 
 ## 📖 專案說明
 
