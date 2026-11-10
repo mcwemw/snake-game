@@ -31,6 +31,7 @@
 snake-game/  #貪食蛇（Snake）
 |──  A05-vibe-web/    #  呆萌演算法視覺化小幫手
 ├──────  index.html   # 主遊戲頁面（包含 HTML、CSS 與 JavaScript）
+├──────  README.md    # 專案說明文件
 ├── index.html   # 主遊戲頁面（包含 HTML、CSS 與 JavaScript）
 └── README.md    # 專案說明文件
 ```
