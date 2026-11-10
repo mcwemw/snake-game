@@ -29,6 +29,8 @@
 
 ```text
 snake-game/
+|──  A05-vibe-web/
+├──────  index.html   # 主遊戲頁面（包含 HTML、CSS 與 JavaScript）
 ├── index.html   # 主遊戲頁面（包含 HTML、CSS 與 JavaScript）
 └── README.md    # 專案說明文件
 ```
