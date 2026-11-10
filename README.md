@@ -1,4 +1,4 @@
-# Vibe Coding — 🐍 貪食蛇（Snake）與 🦞 呆萌演算法視覺化小幫手（路徑搜尋互動圖解
+# Vibe Coding — 🐍 貪食蛇（Snake）與 🦞 呆萌演算法視覺化小幫手（路徑搜尋互動圖解)
 
 ## 📖 專案說明
 
@@ -28,8 +28,8 @@
 ##  檔案結構
 
 ```text
-snake-game/
-|──  A05-vibe-web/
+snake-game/  #貪食蛇（Snake）
+|──  A05-vibe-web/    #  呆萌演算法視覺化小幫手
 ├──────  index.html   # 主遊戲頁面（包含 HTML、CSS 與 JavaScript）
 ├── index.html   # 主遊戲頁面（包含 HTML、CSS 與 JavaScript）
 └── README.md    # 專案說明文件
