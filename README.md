@@ -1,4 +1,4 @@
-# Vibe Coding — 🐍 貪食蛇（Snake）
+# Vibe Coding — 🐍 貪食蛇（Snake）與 🦞 呆萌演算法視覺化小幫手（路徑搜尋互動圖解
 
 ## 📖 專案說明
 
