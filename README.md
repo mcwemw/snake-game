@@ -56,7 +56,7 @@ snake-game/  #貪食蛇（Snake）
 ### 3. JavaScript：遊戲邏輯
 
 **網站連結**
-- **GitHub Pages：** https://mcwemw.github.io/snake-game/（需先在 repo Settings→Pages 開啟 main 分支）
+- **GitHub Pages：** https://mcwemw.github.io/snake-game/  （需先在 repo Settings→Pages 開啟 main 分支）
 - **原始碼：** index.html（同一 repo）
 
 **主要資料結構**
